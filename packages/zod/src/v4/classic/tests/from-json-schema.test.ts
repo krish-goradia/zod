@@ -148,6 +148,28 @@ test("array with constraints", () => {
   expect(() => schema.parse([1, 2, 3, 4, 5])).toThrow();
 });
 
+test("array bounds without items", () => {
+  const schema = fromJSONSchema({ type: "array", minItems: 2, maxItems: 4 });
+  expect(schema.safeParse([]).success).toBe(false);
+  expect(schema.safeParse([1]).success).toBe(false);
+  expect(schema.parse([1, "two"])).toEqual([1, "two"]);
+  expect(schema.parse([null, {}, true, []])).toEqual([null, {}, true, []]);
+  expect(schema.safeParse([1, 2, 3, 4, 5]).success).toBe(false);
+  expect(z.toJSONSchema(schema)).toMatchObject({ type: "array", minItems: 2, maxItems: 4 });
+});
+
+test("zero maximum array length without items", () => {
+  const schema = fromJSONSchema({ type: "array", maxItems: 0 });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.safeParse([null]).success).toBe(false);
+});
+
+test("array without items or bounds remains unrestricted", () => {
+  const schema = fromJSONSchema({ type: "array" });
+  expect(schema.parse([])).toEqual([]);
+  expect(schema.parse([1, "two", null, {}, []])).toEqual([1, "two", null, {}, []]);
+});
+
 test("tuple with prefixItems (draft-2020-12)", () => {
   const schema = fromJSONSchema({
     $schema: "https://json-schema.org/draft/2020-12/schema",
